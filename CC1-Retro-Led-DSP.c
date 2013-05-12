@@ -14,7 +14,7 @@
 #define F_CPU 3686400L
 #define USART_BAUDRATE 1200
 #define BAUD_PRESCALE (((F_CPU / (USART_BAUDRATE * 16UL))) - 1)  //191
-#define DISPLAY_MUX_REFRESH 256 - 144		// 100Hz
+#define DISPLAY_MUX_REFRESH 256 - 60		// 240Hz
 #define DISPLAY_TIMEOUT_REFRESH 65536 - 3600	
 #define DISPLAY_TIMEOUT 5					//seconds
 
@@ -60,11 +60,11 @@ ISR (USART_RX_vect) {
 	
 	for (tmp = 5; tmp > 0; tmp--) uart_buffer[tmp] = uart_buffer[tmp-1];	//shift buffer
 	uart_buffer[0] = UDR;
-	if ((uart_buffer[5] = '<') && (uart_buffer[0] = '>')) {
-		for (tmp = 0; tmp < 4; tmp++) led_buffer[tmp] = ascii_to_7seg(uart_buffer[tmp+1]);
+	if ((uart_buffer[5] == '<') && (uart_buffer[0] == '>')) {
+		for (tmp = 0; tmp < 4; tmp++) led_buffer[tmp] = ascii_to_7seg(uart_buffer[4-tmp]);
 		timeout = DISPLAY_TIMEOUT;
 		TCNT1 = DISPLAY_TIMEOUT_REFRESH;
-		TIMSK = (1<<TOIE0) | (1<<TOIE1);			//enable display & timeout -> timer overflow interrupt for Timer0
+		TIMSK |= (1<<TOIE0) | (1<<TOIE1);			//enable display & timeout -> timer overflow interrupt for Timer0
 	}	
 }	
 
@@ -86,7 +86,7 @@ ISR (TIMER1_OVF_vect) {
 	if (timeout==0) {
 		LED_PORT = 0;
 		CATHODE_PORT |= (cathode_1 | cathode_2 | cathode_3 | cathode_4);	//set cathodes inactive		
-		TIMSK = (0<<TOIE0);			//disable display -> timer overflow interrupt for Timer0
+		TIMSK &= (0<<TOIE0);			//disable display -> timer overflow interrupt for Timer0
 		//Switch CPU to IDLE mode here (?)
 	}	
 }
@@ -103,13 +103,13 @@ int main(void)
 	TCCR0A = (0<<COM0A0) | (0<<COM0A1) | (0<<COM0B0) | (0<<COM0B1) | (0<<WGM00) | (0<<WGM01) | (0<<WGM02); //Timer0 mode select
 	TCCR0B = (1<<CS02) | (0<<CS01) | (0<<CS00);  //Timer0 select clock pre-scaler  ( ÷256 )
 	TCNT0 = DISPLAY_MUX_REFRESH;	//init value
-	TIMSK |= (1<<TOIE0);			//enable display -> timer overflow interrupt for Timer0
+	TIMSK = (1<<TOIE0);			//enable display -> timer overflow interrupt for Timer0
 	
 	//Timer1
 	TCCR1A = (0<<COM1A0) | (0<<COM1A1) | (0<<COM1B0) | (0<<COM1B1) | (0<<WGM10) | (0<<WGM11) ; //Timer1 mode select
 	TCCR1B = (1<<CS12) | (0<<CS11) | (1<<CS10) | (0<<WGM12);  //Timer1 select clock pre-scaler  ( ÷1024 )
 	TCNT1 = DISPLAY_TIMEOUT_REFRESH;	//init value
-	TIMSK |= (1<<TOIE1);				//enable display -> timer overflow interrupt for Timer1
+	//TIMSK |= (1<<TOIE1);				//enable display -> timer overflow interrupt for Timer1
 	
 	//UART 
 	UBRRH = (unsigned char)(BAUD_PRESCALE>>8);

@@ -49,5 +49,5 @@
 #define digit_b LED_F + LED_E + LED_D + LED_C + LED_G
 #define digit_c LED_A + LED_F + LED_E + LED_D
 #define digit_d LED_B + LED_C + LED_D + LED_E + LED_G
-#define digit_e LED_A + LED_B + LED_G + LED_C + LED_D
-#define digit_f LED_A + LED_B + LED_G + LED_C
+#define digit_e LED_A + LED_F + LED_G + LED_E + LED_D
+#define digit_f LED_A + LED_F + LED_G + LED_E
